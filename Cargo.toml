@@ -1,0 +1,11 @@
+[package]
+name = "vfw_build_utils"
+version = "0.1.0"
+authors = ["yang.li <yang.li@picocom.com>"]
+edition = "2021"
+
+[dependencies]
+cc = "1.0"
+handlebars = "4.3"
+serde = {version = "1"}
+v_build_utils = {git = "https://github.com/shady831213/v_build_utils"}
