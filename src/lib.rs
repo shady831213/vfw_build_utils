@@ -107,6 +107,7 @@ impl std::ops::Deref for HeaderDir {
 
 pub struct LinkFile<'a> {
     output: fs::File,
+    pub path: PathBuf,
     te: Handlebars<'a>,
 }
 
@@ -114,8 +115,10 @@ impl<'a> LinkFile<'a> {
     pub fn new(name: &str) -> Result<Self, String> {
         let out_dir = PathBuf::from(env::var("OUT_DIR").map_err(|e| e.to_string())?);
         println!("cargo:rustc-link-search={}", out_dir.display());
+        let path = out_dir.join(name);
         Ok(LinkFile {
-            output: fs::File::create(out_dir.join(name)).map_err(|e| e.to_string())?,
+            output: fs::File::create(&path).map_err(|e| e.to_string())?,
+            path,
             te: Handlebars::new(),
         })
     }
