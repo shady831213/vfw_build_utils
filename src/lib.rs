@@ -94,7 +94,7 @@ pub fn dep_header(dep: &str) -> Result<String, String> {
 pub struct HeaderDir(OtherDir);
 
 impl HeaderDir {
-    pub fn new() -> Result<Self, env::VarError> {
+    pub fn new() -> Result<Self, String> {
         Ok(HeaderDir(OtherDir::new("include")?))
     }
 }
@@ -107,21 +107,34 @@ impl std::ops::Deref for HeaderDir {
 
 pub struct LinkFile<'a> {
     output: fs::File,
-    pub path: PathBuf,
+    dir: OtherDir,
     te: Handlebars<'a>,
+}
+
+impl<'a> std::ops::Deref for LinkFile<'a> {
+    type Target = OtherDir;
+    fn deref(&self) -> &Self::Target {
+        &self.dir
+    }
 }
 
 impl<'a> LinkFile<'a> {
     pub fn new(name: &str) -> Result<Self, String> {
-        let out_dir = PathBuf::from(env::var("OUT_DIR").map_err(|e| e.to_string())?);
-        println!("cargo:rustc-link-search={}", out_dir.display());
-        let path = out_dir.join(name);
+        let dir = Self::empty()?;
+        println!("cargo:rustc-link-search={}", dir.root.display());
+        let path = dir.root.join(name);
         Ok(LinkFile {
-            output: fs::File::create(&path).map_err(|e| e.to_string())?,
-            path,
+            output: fs::File::create(&path)
+                .map_err(|e| format!("{:?}: {:?}", path.display(), e))?,
+            dir,
             te: Handlebars::new(),
         })
     }
+
+    pub fn empty() -> Result<OtherDir, String> {
+        OtherDir::new("links")
+    }
+
     pub fn add_file<P: AsRef<Path> + Copy>(&mut self, file: P) -> std::io::Result<&mut Self> {
         println!("cargo:rerun-if-changed={}", file.as_ref().display());
         let mut buffer = vec![];
